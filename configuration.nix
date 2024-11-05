@@ -127,6 +127,9 @@
     git
     p7zip
 
+    pandoc
+    texlive.combined.scheme-full
+
     wineWowPackages.stable
 
     # python
@@ -149,6 +152,10 @@
     nodejs
     yarn
     yarn2nix
+
+    graphviz
+    gotop
+    gimp
   ];
 
 
