@@ -16,17 +16,24 @@
   boot.loader.efi.efiSysMountPoint = "/boot/efi";
 
   boot.kernelPackages = pkgs.linuxPackages_5_10;
-  hardware.opengl.driSupport32Bit = true;
 
-  hardware.opengl.extraPackages = with pkgs; [
+  # TEST
+  boot.kernelParams = [ "usbcore.autosuspend=-1" ];
+
+  hardware.graphics.enable32Bit = true;
+  hardware.graphics.extraPackages = with pkgs; [
     mesa
   ];
 
   services.xserver.videoDrivers = ["amdgpu"];
 
 
-  
-  
+  # Fix for horrific slow boot
+  powerManagement.enable = true;
+  powerManagement.cpuFreqGovernor = "performance";
+
+  boot.kernelModules = [ "acpi_cpufreq" ];
+  #
   
 
   networking.hostName = "nixos"; # Define your hostname.
@@ -61,21 +68,21 @@
   services.xserver.enable = true;
 
   # Enable the KDE Plasma Desktop Environment.
-  services.xserver.displayManager.sddm.enable = true;
-  services.xserver.desktopManager.plasma5.enable = true;
+  services.displayManager.sddm.enable = true;
+  services.desktopManager.plasma6.enable = true;
 
   # Configure keymap in X11
-  services.xserver = {
+  services.xserver.xkb = {
     layout = "us";
-    xkbVariant = "";
+    variant = "";
   };
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
   # Enable sound with pipewire.
-  sound.enable = true;
-  hardware.pulseaudio.enable = false;
+  # sound.enable = true;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -100,15 +107,16 @@
     extraGroups = [ "networkmanager" "wheel" "docker" ];
     packages = with pkgs; [
       firefox
-      kate
+      kdePackages.kate
       godot_4
       spotify
     ];
   };
 
   # Enable automatic login for the user.
-  services.xserver.displayManager.autoLogin.enable = true;
-  services.xserver.displayManager.autoLogin.user = "dustin";
+  # `services.xserver.displayManager.autoLogin' has been renamed to `services.displayManager.autoLogin'
+  services.displayManager.autoLogin.enable = true;
+  services.displayManager.autoLogin.user = "dustin";
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -119,13 +127,14 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     vscode
+    element-desktop
     wget
     discord
     steam
-    google-chrome
     nodejs
     git
     p7zip
+    xorg.xkill
 
     pandoc
     texlive.combined.scheme-full
@@ -137,7 +146,12 @@
       ps.requests 
       ps.black 
       ps.pandas 
-      ps.aiohttp ]))
+      ps.aiohttp
+      ps.django
+      ps.mypy
+      ps.django-stubs
+      ps.pywebview
+      ps.screeninfo ]))
 
     # office
     libreoffice-qt
@@ -158,9 +172,6 @@
     gimp
   ];
 
-
-  virtualisation.docker.enable = true;
-
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
@@ -172,20 +183,21 @@
 
 
   programs.zsh = {
-  enable = true;
-  shellAliases = {
-    ll = "ls -l";
-    update = "sudo nixos-rebuild switch";
-  };
-  # histSize = 10000;
-  # histFile = "${config.xdg.dataHome}/zsh/history";
-  ohMyZsh = {
     enable = true;
-    plugins = [ "git" "thefuck" ];
-    theme = "robbyrussell";
+    shellAliases = {
+      ll = "ls -l";
+      update = "sudo nixos-rebuild switch";
+    };
+    # histSize = 10000;
+    # histFile = "${config.xdg.dataHome}/zsh/history";
+    ohMyZsh = {
+      enable = true;
+      plugins = [ "git" ];
+      theme = "aussiegeek";
+    };
   };
-};
-users.defaultUserShell = pkgs.zsh;
+
+  users.defaultUserShell = pkgs.zsh;
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -204,6 +216,13 @@ users.defaultUserShell = pkgs.zsh;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
+
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 8888 ];
+  };
+
+
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
