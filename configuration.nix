@@ -11,14 +11,12 @@
     ];
 
   # Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.efi.efiSysMountPoint = "/boot/efi";
+  boot.loader.grub.enable = true;
+  boot.loader.grub.device = "/dev/sda";
+  boot.loader.grub.useOSProber = true;
 
-  boot.kernelPackages = pkgs.linuxPackages_5_10;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # TEST
-  boot.kernelParams = [ "usbcore.autosuspend=-1" ];
 
   hardware.graphics.enable32Bit = true;
   hardware.graphics.extraPackages = with pkgs; [
@@ -66,6 +64,8 @@
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
+
+  virtualisation.docker.enable = true;
 
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
@@ -125,8 +125,15 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+
+    archipelago
+    
+    unzip
+    curl
+
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     vscode
+    docker
     element-desktop
     wget
     discord
@@ -142,16 +149,31 @@
     wineWowPackages.stable
 
     # python
-    (python3.withPackages (ps: [ 
-      ps.requests 
-      ps.black 
-      ps.pandas 
+    (python3.withPackages (ps: [
+
+      ps.beautifulsoup4
+      ps.folium
+      ps.progressbar2
+      ps.ijson
+
+
+      ps.requests
+      ps.black
+      ps.numpy
+      ps.pandas
       ps.aiohttp
       ps.django
       ps.mypy
       ps.django-stubs
       ps.pywebview
-      ps.screeninfo ]))
+      ps.screeninfo
+      ps.scipy
+      ps.pillow
+      ps.matplotlib
+      ps.scikit-learn
+      ps.torch
+      ps.torchvision
+      ps.tqdm ]))
 
     # office
     libreoffice-qt
@@ -170,7 +192,16 @@
     graphviz
     gotop
     gimp
+
+    unityhub
   ];
+
+  environment.sessionVariables = {
+    BUN_INSTALL = "$HOME/.bun";
+    PATH = "$HOME/.bun/bin:$PATH";
+  };
+
+  programs.nix-ld.enable = true;
 
   programs.steam = {
     enable = true;
@@ -219,7 +250,7 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 8888 ];
+    allowedTCPPorts = [ 8888 38281 ];
   };
 
 
