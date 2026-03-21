@@ -1,7 +1,3 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
-
 { config, pkgs, ... }:
 
 {
@@ -89,12 +85,6 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
-
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
-    #media-session.enable = true;
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
@@ -113,33 +103,76 @@
     ];
   };
 
-  # Enable automatic login for the user.
-  # `services.xserver.displayManager.autoLogin' has been renamed to `services.displayManager.autoLogin'
   services.displayManager.autoLogin.enable = true;
   services.displayManager.autoLogin.user = "dustin";
 
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  # REQUIRED: rust overlay + package
+  nixpkgs.overlays = [
+    (import (fetchTarball "https://github.com/oxalica/rust-overlay/archive/master.tar.gz"))
+    (final: prev: {
+      zenoh-bridge-remote-api =
+        let
+          rustPlatform = final.makeRustPlatform {
+            cargo = final.rust-bin.stable.latest.default;
+            rustc = final.rust-bin.stable.latest.default;
+          };
+        in
+        rustPlatform.buildRustPackage {
+          pname = "zenoh-bridge-remote-api";
+          version = "1.8.0";
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
+          src = final.fetchFromGitHub {
+            owner = "eclipse-zenoh";
+            repo = "zenoh-ts";
+            rev = "1.8.0";
+            hash = "sha256-fpH/3nZTEye7dKlo42TWj4w9I8bioju2DcDU245Lxzg=";
+          };
+
+          cargoHash = "sha256-wJueIC7MDqczntwSky1Cscsh5qkurRCt0Jg5TNftUWU=";
+
+          cargoBuildFlags = [ "-p" "zenoh-bridge-remote-api" ];
+
+          nativeBuildInputs = [ final.pkg-config ];
+          buildInputs = [ final.openssl ];
+        };
+    })
+  ];
+
   environment.systemPackages = with pkgs; [
 
+    home-manager
+
     archipelago
+
+    google-chrome 
     
     unzip
     curl
 
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    vim
     vscode
     docker
     element-desktop
     wget
     discord
     steam
+
+    # rust 
+    rustc
+    cargo
+    rustfmt
+    clippy
+
+    steam-run
+    
     nodejs
+    
     git
+    meld
+    sublime-merge
+
     p7zip
     xorg.xkill
 
@@ -148,15 +181,19 @@
 
     wineWowPackages.stable
 
-    # python
-    (python3.withPackages (ps: [
+    graphite-cli
+    awscli2
+    uv
+    go-jira
+    protobuf
+    zenoh
+    zenoh-bridge-remote-api
 
+    (python3.withPackages (ps: [
       ps.beautifulsoup4
       ps.folium
       ps.progressbar2
       ps.ijson
-
-
       ps.requests
       ps.black
       ps.numpy
@@ -173,18 +210,13 @@
       ps.scikit-learn
       ps.torch
       ps.torchvision
-      ps.tqdm ]))
+      ps.tqdm
+    ]))
 
-    # office
     libreoffice-qt
-
-    # zsh
     zsh
-
-    # java
     jdk17
 
-    # web
     nodejs
     yarn
     yarn2nix
@@ -192,6 +224,9 @@
     graphviz
     gotop
     gimp
+
+    cool-retro-term
+    ghostty
 
     unityhub
   ];
@@ -205,22 +240,18 @@
 
   programs.steam = {
     enable = true;
-    remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
-    dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
   };
 
   system.autoUpgrade.enable = true;
   
-
-
   programs.zsh = {
     enable = true;
     shellAliases = {
       ll = "ls -l";
       update = "sudo nixos-rebuild switch";
     };
-    # histSize = 10000;
-    # histFile = "${config.xdg.dataHome}/zsh/history";
     ohMyZsh = {
       enable = true;
       plugins = [ "git" ];
@@ -230,40 +261,12 @@
 
   users.defaultUserShell = pkgs.zsh;
 
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-  
-  
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 8888 38281 ];
   };
 
+  system.stateVersion = "22.11";
 
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "22.11"; # Did you read the comment?
-
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 }
