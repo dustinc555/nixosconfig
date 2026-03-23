@@ -108,38 +108,6 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  # REQUIRED: rust overlay + package
-  nixpkgs.overlays = [
-    (import (fetchTarball "https://github.com/oxalica/rust-overlay/archive/master.tar.gz"))
-    (final: prev: {
-      zenoh-bridge-remote-api =
-        let
-          rustPlatform = final.makeRustPlatform {
-            cargo = final.rust-bin.stable.latest.default;
-            rustc = final.rust-bin.stable.latest.default;
-          };
-        in
-        rustPlatform.buildRustPackage {
-          pname = "zenoh-bridge-remote-api";
-          version = "1.8.0";
-
-          src = final.fetchFromGitHub {
-            owner = "eclipse-zenoh";
-            repo = "zenoh-ts";
-            rev = "1.8.0";
-            hash = "sha256-fpH/3nZTEye7dKlo42TWj4w9I8bioju2DcDU245Lxzg=";
-          };
-
-          cargoHash = "sha256-wJueIC7MDqczntwSky1Cscsh5qkurRCt0Jg5TNftUWU=";
-
-          cargoBuildFlags = [ "-p" "zenoh-bridge-remote-api" ];
-
-          nativeBuildInputs = [ final.pkg-config ];
-          buildInputs = [ final.openssl ];
-        };
-    })
-  ];
-
   environment.systemPackages = with pkgs; [
 
     home-manager
@@ -181,13 +149,8 @@
 
     wineWowPackages.stable
 
-    graphite-cli
-    awscli2
-    uv
-    go-jira
-    protobuf
-    zenoh
-    zenoh-bridge-remote-api
+    asciiquarium-transparent
+    crawl
 
     (python3.withPackages (ps: [
       ps.beautifulsoup4
