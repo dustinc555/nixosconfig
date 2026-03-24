@@ -106,11 +106,11 @@
   services.displayManager.autoLogin.enable = true;
   services.displayManager.autoLogin.user = "dustin";
 
-  nixpkgs.config.allowUnfree = true;
-
   environment.systemPackages = with pkgs; [
 
     home-manager
+
+    openclaw-gateway
 
     archipelago
 
@@ -126,13 +126,7 @@
     wget
     discord
     steam
-
-    # rust 
-    rustc
-    cargo
-    rustfmt
-    clippy
-
+    
     steam-run
     
     nodejs
@@ -147,7 +141,7 @@
     pandoc
     texlive.combined.scheme-full
 
-    wineWowPackages.stable
+    wineWow64Packages.stable
 
     asciiquarium-transparent
     crawl
