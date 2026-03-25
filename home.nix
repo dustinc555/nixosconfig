@@ -60,6 +60,9 @@ in
     # tries to update them.
     documents = null;
 
+    # Google Calendar integration (gogcli).
+    bundledPlugins.gogcli.enable = true;
+
     instances.default = {
       enable = true;
 

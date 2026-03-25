@@ -54,6 +54,8 @@
     pulse.enable = true;
   };
 
+  services.tailscale.enable = true;
+
   users.users.dustin = {
     isNormalUser = true;
     description = "Dustin Cook";
@@ -75,6 +77,7 @@
     archipelago
 
     google-chrome 
+    google-cloud-sdk
     
     unzip
     curl
