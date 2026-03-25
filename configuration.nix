@@ -2,48 +2,24 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+    [ ./hardware-configuration.nix ];
 
-  # Bootloader.
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
-
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-
   hardware.graphics.enable32Bit = true;
-  hardware.graphics.extraPackages = with pkgs; [
-    mesa
-  ];
-
+  hardware.graphics.extraPackages = with pkgs; [ mesa ];
   services.xserver.videoDrivers = ["amdgpu"];
 
-
-  # Fix for horrific slow boot
   powerManagement.enable = true;
   powerManagement.cpuFreqGovernor = "performance";
-
   boot.kernelModules = [ "acpi_cpufreq" ];
-  #
-  
 
-  networking.hostName = "nixos"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Enable networking
+  networking.hostName = "nixos";
   networking.networkmanager.enable = true;
-
-  # Set your time zone.
   time.timeZone = "America/Denver";
-
-  # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
   i18n.extraLocaleSettings = {
@@ -58,26 +34,17 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  # Enable the X11 windowing system.
   services.xserver.enable = true;
-
   virtualisation.docker.enable = true;
-
-  # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
 
-  # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";
     variant = "";
   };
 
-  # Enable CUPS to print documents.
   services.printing.enable = true;
-
-  # Enable sound with pipewire.
-  # sound.enable = true;
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -87,10 +54,6 @@
     pulse.enable = true;
   };
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.dustin = {
     isNormalUser = true;
     description = "Dustin Cook";
@@ -107,10 +70,7 @@
   services.displayManager.autoLogin.user = "dustin";
 
   environment.systemPackages = with pkgs; [
-
     home-manager
-
-    openclaw-gateway
 
     archipelago
 
@@ -136,7 +96,7 @@
     sublime-merge
 
     p7zip
-    xorg.xkill
+    xkill
 
     pandoc
     texlive.combined.scheme-full
@@ -168,6 +128,7 @@
       ps.torch
       ps.torchvision
       ps.tqdm
+      ps.discordpy
     ]))
 
     libreoffice-qt
@@ -222,6 +183,16 @@
     enable = true;
     allowedTCPPorts = [ 8888 38281 ];
   };
+
+  # Cleanup: remove any legacy manually-installed OpenClaw system service.
+  # Best practice with nix-openclaw on Linux is a Home Manager-managed user service.
+  systemd.tmpfiles.rules = [
+    "r /etc/systemd/system/openclaw-gateway.service - - - - -"
+    "r /etc/systemd/system/multi-user.target.wants/openclaw-gateway.service - - - - -"
+  ];
+
+  # NOTE: clawdia-dbot intentionally removed for now.
+  # It was failing and causing `nixos-rebuild switch` to return exit status 4.
 
   system.stateVersion = "22.11";
 
