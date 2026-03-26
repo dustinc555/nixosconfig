@@ -152,5 +152,32 @@ in
 
 
   systemd.user.services.openclaw-gateway.Service.EnvironmentFile = "%h/.config/openclaw/openclaw.env";
+  # Defensive fix: ensure workspace bootstrap docs are writable at runtime.
+  # Some OpenClaw flows can recreate these as Nix store symlinks (EROFS on write).
+  systemd.user.services.openclaw-gateway.Service.ExecStartPre =
+    let
+      fixWorkspaceDocs = pkgs.writeShellScript "openclaw-fix-workspace-docs" ''
+        set -euo pipefail
+
+        ws="$HOME/.openclaw/workspace"
+        mkdir -p "$ws"
+
+        for f in AGENTS.md SOUL.md TOOLS.md; do
+          target="$ws/$f"
+
+          if [ -L "$target" ]; then
+            rm -f "$target"
+          fi
+
+          if [ ! -e "$target" ]; then
+            cp -f "${./openclaw-documents}/$f" "$target"
+          fi
+        done
+
+        chmod 700 "$HOME/.openclaw" "$ws" 2>/dev/null || true
+        chmod 644 "$ws"/AGENTS.md "$ws"/SOUL.md "$ws"/TOOLS.md 2>/dev/null || true
+      '';
+    in
+    lib.mkBefore [ fixWorkspaceDocs ];
   systemd.user.services.openclaw-gateway.Install.WantedBy = [ "default.target" ];
 }

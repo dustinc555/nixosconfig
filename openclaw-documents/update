@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sync OpenClaw workspace docs from this directory, then restart the gateway.
+
+docs_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ws_dir="$HOME/.openclaw/workspace"
+
+need=("AGENTS.md" "SOUL.md" "TOOLS.md" "HEARTBEAT.md")
+
+mkdir -p "$ws_dir"
+
+for f in "${need[@]}"; do
+  src="$docs_dir/$f"
+  dst="$ws_dir/$f"
+
+  if [ ! -f "$src" ]; then
+    echo "Missing source file: $src" >&2
+    exit 1
+  fi
+
+  # Replace store symlink (or any symlink) with a real file.
+  if [ -L "$dst" ]; then
+    rm -f "$dst"
+  fi
+
+  install -m 0644 -T "$src" "$dst"
+done
+
+chmod 700 "$HOME/.openclaw" "$ws_dir" 2>/dev/null || true
+
+echo "Synced docs to: $ws_dir"
+
+systemctl --user restart openclaw-gateway.service
+systemctl --user --no-pager --full status openclaw-gateway.service | sed -n '1,12p'

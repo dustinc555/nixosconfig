@@ -56,6 +56,16 @@
 
   services.tailscale.enable = true;
 
+  security.auditd.enable = true;
+
+  # optional but required for exec logging
+  security.audit.enable = true;
+
+  # define rules
+  security.audit.rules = [
+    "-a always,exit -F arch=b64 -S execve"
+  ];
+
   users.users.dustin = {
     isNormalUser = true;
     description = "Dustin Cook";
@@ -186,6 +196,8 @@
     enable = true;
     allowedTCPPorts = [ 8888 38281 ];
   };
+
+  services.ollama.enable = true;
 
   # Cleanup: remove any legacy manually-installed OpenClaw system service.
   # Best practice with nix-openclaw on Linux is a Home Manager-managed user service.
