@@ -83,6 +83,7 @@
 
   environment.systemPackages = with pkgs; [
     home-manager
+    home-manager
 
     archipelago
 
@@ -96,6 +97,7 @@
     vscode
     docker
     element-desktop
+    telegram-desktop
     wget
     discord
     steam
@@ -198,16 +200,6 @@
   };
 
   services.ollama.enable = true;
-
-  # Cleanup: remove any legacy manually-installed OpenClaw system service.
-  # Best practice with nix-openclaw on Linux is a Home Manager-managed user service.
-  systemd.tmpfiles.rules = [
-    "r /etc/systemd/system/openclaw-gateway.service - - - - -"
-    "r /etc/systemd/system/multi-user.target.wants/openclaw-gateway.service - - - - -"
-  ];
-
-  # NOTE: clawdia-dbot intentionally removed for now.
-  # It was failing and causing `nixos-rebuild switch` to return exit status 4.
 
   system.stateVersion = "22.11";
 
