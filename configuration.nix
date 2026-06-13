@@ -4,18 +4,20 @@
   imports =
     [ ./hardware-configuration.nix ];
 
+  # AMD GPU / ROCm support
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [ rocmPackages.clr.icd ];
+  };
+
   boot.loader.grub.enable = true;
+
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelParams = [ "kvm.ignore_msrs=1" "amd_iommu=on" "iommu=pt" ];
 
-  hardware.graphics.enable32Bit = true;
-  hardware.graphics.extraPackages = with pkgs; [ mesa ];
-  services.xserver.videoDrivers = ["amdgpu"];
-
-  powerManagement.enable = true;
-  powerManagement.cpuFreqGovernor = "performance";
-  boot.kernelModules = [ "acpi_cpufreq" ];
+  boot.kernelModules = [ "acpi_cpufreq" "vhost-net" "vfio_pci" ];
 
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
@@ -35,6 +37,10 @@
   };
 
   services.xserver.enable = true;
+  virtualisation.libvirtd.enable = true;
+  virtualisation.libvirtd.qemu.package = pkgs.qemu_kvm;
+  virtualisation.libvirtd.qemu.swtpm.enable = true;
+  programs.virt-manager.enable = true;
   virtualisation.docker.enable = true;
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
@@ -69,7 +75,7 @@
   users.users.dustin = {
     isNormalUser = true;
     description = "Dustin Cook";
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "libvirtd" ];
     packages = with pkgs; [
       firefox
       kdePackages.kate
@@ -83,11 +89,13 @@
 
   environment.systemPackages = with pkgs; [
     home-manager
-    home-manager
 
     archipelago
 
-    google-chrome 
+    opencode
+    claude-code
+    codex
+
     google-cloud-sdk
     
     unzip
@@ -105,8 +113,12 @@
     steam-run
     
     nodejs
+    slidev-cli
     
     git
+    git-lfs
+    graphite-cli
+    gh
     meld
     sublime-merge
 
@@ -131,9 +143,7 @@
       ps.numpy
       ps.pandas
       ps.aiohttp
-      ps.django
       ps.mypy
-      ps.django-stubs
       ps.pywebview
       ps.screeninfo
       ps.scipy
@@ -147,12 +157,11 @@
     ]))
 
     libreoffice-qt
+    obsidian
     zsh
     jdk17
 
     nodejs
-    yarn
-    yarn2nix
 
     graphviz
     gotop
@@ -162,11 +171,13 @@
     ghostty
 
     unityhub
+    gdevelop
+    blender
   ];
 
   environment.sessionVariables = {
     BUN_INSTALL = "$HOME/.bun";
-    PATH = "$HOME/.bun/bin:$PATH";
+    PATH = "$HOME/.npm-global/bin:$HOME/.bun/bin:$PATH";
   };
 
   programs.nix-ld.enable = true;
@@ -196,10 +207,16 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 8888 38281 ];
+    allowedTCPPorts = [ 8888 38281 11434 ];
   };
 
-  services.ollama.enable = true;
+  services.ollama = {
+    enable = true;
+    host = "0.0.0.0";
+    port = 11434;
+    package = pkgs.ollama-rocm;
+    rocmOverrideGfx = "10.3.0";
+  };
 
   system.stateVersion = "22.11";
 
