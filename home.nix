@@ -63,6 +63,23 @@ in
 
   programs.bash.enable = true;
 
+  systemd.user.services.beeper-life-guardian = {
+    Unit = {
+      Description = "Beeper Desktop for Hermes scheduled messaging";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+
+    Service = {
+      Type = "simple";
+      ExecStart = "${pkgs.beeper}/bin/beeper";
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
   programs.zsh = {
     enable = true;
     sessionVariables = {

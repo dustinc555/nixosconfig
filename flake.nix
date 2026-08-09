@@ -13,9 +13,11 @@
       url = "github:natsukium/mcp-servers-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    hermes-agent.url = "github:NousResearch/hermes-agent";
   };
 
-  outputs = { self, nixpkgs, home-manager, mcp-servers-nix, ... }:
+  outputs = { self, nixpkgs, home-manager, mcp-servers-nix, hermes-agent, ... }:
   let
     system = "x86_64-linux";
 
@@ -45,6 +47,9 @@
       nixpkgs.lib.nixosSystem {
         inherit system;
         pkgs = pkgs;
+        specialArgs = {
+          inherit hermes-agent;
+        };
 
         modules = [
           ./configuration.nix

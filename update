@@ -1,5 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-nix flake update --commit-lock-file
-sudo nixos-rebuild switch --flake /home/dustin/Code/nixosconfig#default
+source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+target_dir=/etc/nixos
+files=(configuration.nix home.nix flake.nix flake.lock)
+
+if [[ ! -f "$target_dir/hardware-configuration.nix" ]]; then
+  printf 'Missing %s/hardware-configuration.nix\n' "$target_dir" >&2
+  exit 1
+fi
+
+for file in "${files[@]}"; do
+  if [[ ! -f "$source_dir/$file" ]]; then
+    printf 'Missing %s/%s\n' "$source_dir" "$file" >&2
+    exit 1
+  fi
+done
+
+sudo -v
+nix flake update --flake "$source_dir"
+
+for file in "${files[@]}"; do
+  sudo install -m 0644 "$source_dir/$file" "$target_dir/$file"
+done
+
+sudo nixos-rebuild switch --flake "$target_dir#default"
